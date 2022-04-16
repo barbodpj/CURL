@@ -267,7 +267,7 @@ class NEW_ImageProcessing(object):
         Compute the slope of the line segments
         '''
         slope = C[:,1:] - C[:,:-1]
-        slope_sqr_diff = slope_sqr_diff  + torch.sum((slope[:,1:]-slope[:,:-1])**2,1)
+        slope_sqr_diff = slope_sqr_diff  + torch.sum((slope[:,1:]-slope[:,:-1])**2,1)[:,None]
 
 
         r = img[:,None,:,:,channel_in].repeat(1,slope.shape[1]-1,1,1) * curve_steps

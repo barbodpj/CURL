@@ -6,14 +6,15 @@ You can choose between training and testing in the arguments
 Other Arguments are similar to the base code.
 
 
-<div class="row">
-  <div class="column">
-    <img src="samples/in1.jpg" alt="Snow">
-      <figcaption><center>Input</center></figcaption>
-  </div>
-  <div class="column">
-    <img src="samples/res1.jpg" alt="Forest" >
-      <figcaption><center>Output</center></figcaption>
-  </div>
-</div>
+
+<p align="center">
+  <img alt="alt text" src="samples/in1.jpg" >
+  <br>
+    <em>Sample Input</em>
+</p>
+<p align="center">
+  <img alt="alt text" src="samples/res1.jpg" >
+  <br>
+    <em>Sample Output</em>
+</p>
 

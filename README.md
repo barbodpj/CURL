@@ -5,8 +5,15 @@ In the training phase every few steps (determined by "valid_every" argument) eva
 You can choose between training and testing in the arguments
 Other Arguments are similar to the base code.
 
-<p align="center">
-  <img alt="alt text" src="samples/in1.jpg" width="200">
-  <br>
-    <em>Input</em>
-</p>
+
+<div class="row">
+  <div class="column">
+    <img src="samples/in1.jpg" alt="Snow" style="width:100%">
+      <figcaption><center>Input</center></figcaption>
+  </div>
+  <div class="column">
+    <img src="samples/res1.jpg" alt="Forest" style="width:100%">
+      <figcaption><center>Output</center></figcaption>
+  </div>
+</div>
+

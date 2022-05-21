@@ -3,12 +3,6 @@
 This is a PyTorch implementation of CURL: Neural Curve Layers for Global Image Enhancement
 https://arxiv.org/pdf/1911.13175.pdf
 
-Please cite paper if you use this code.
-
-Tested with Pytorch 1.7.1, Python 3.7.9
-
-Authors: Sean Moran (sean.j.moran@gmail.com), 2020
-
 '''
 import matplotlib
 
@@ -21,7 +15,6 @@ import torch
 import torch.nn as nn
 from collections import defaultdict
 import rgb_ted
-from util import ImageProcessing
 from new_util import NEW_ImageProcessing
 from torch.autograd import Variable
 import math
@@ -86,6 +79,7 @@ class NEW_CURLLoss(nn.Module):
         :rtype: float
 
         """
+        device = img1.device
         (_, num_channel, _, _) = img1.size()
         window = self.create_window(self.ssim_window_size, num_channel)
 
@@ -113,11 +107,11 @@ class NEW_CURLLoss(nn.Module):
         C2 = 0.03 ** 2
 
         ssim_map1 = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2))
-        ssim_map2 = ((mu1_sq.cuda() + mu2_sq.cuda() + C1) *
-                     (sigma1_sq.cuda() + sigma2_sq.cuda() + C2))
-        ssim_map = ssim_map1.cuda() / ssim_map2.cuda()
-        v1 = 2.0 * sigma12.cuda() + C2
-        v2 = sigma1_sq.cuda() + sigma2_sq.cuda() + C2
+        ssim_map2 = ((mu1_sq.to(device) + mu2_sq.to(device) + C1) *
+                     (sigma1_sq.to(device) + sigma2_sq.to(device) + C2))
+        ssim_map = ssim_map1.to(device) / ssim_map2.to(device)
+        v1 = 2.0 * sigma12.to(device) + C2
+        v2 = sigma1_sq.to(device) + sigma2_sq.to(device) + C2
         cs = torch.mean(v1 / v2)
 
         return ssim_map.mean(), cs
@@ -174,6 +168,7 @@ class NEW_CURLLoss(nn.Module):
         return output
 
     def forward(self, predicted_img_batch, target_img_batch, gradient_regulariser):
+        device = predicted_img_batch.device
         """Forward function for the CURL loss
 
         :param predicted_img_batch_high_res:
@@ -187,15 +182,15 @@ class NEW_CURLLoss(nn.Module):
         target_img_batch = target_img_batch
 
         ssim_loss_value = Variable(
-            torch.cuda.FloatTensor(torch.zeros(1, 1).cuda()))
+            torch.FloatTensor(torch.zeros(1, 1).to(device)))
         l1_loss_value = Variable(
-            torch.cuda.FloatTensor(torch.zeros(1, 1).cuda()))
+            torch.FloatTensor(torch.zeros(1, 1).to(device)))
         cosine_rgb_loss_value = Variable(
-            torch.cuda.FloatTensor(torch.zeros(1, 1).cuda()))
+            torch.FloatTensor(torch.zeros(1, 1).to(device)))
         hsv_loss_value = Variable(
-            torch.cuda.FloatTensor(torch.zeros(1, 1).cuda()))
+            torch.FloatTensor(torch.zeros(1, 1).to(device)))
         rgb_loss_value = Variable(
-            torch.cuda.FloatTensor(torch.zeros(1, 1).cuda()))
+            torch.FloatTensor(torch.zeros(1, 1).to(device)))
 
 
 

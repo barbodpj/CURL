@@ -11,9 +11,39 @@ matplotlib.use('agg')
 np.set_printoptions(threshold=sys.maxsize)
 
 class NEW_ImageProcessing(object):
+    @staticmethod
+    def swapimdims_3HW_HW3(img):
+        """Move the image channels to the first dimension of the numpy
+        multi-dimensional array
+
+        :param img: numpy nd array representing the image
+        :returns: numpy nd array with permuted axes
+        :rtype: numpy nd array
+
+        """
+        if img.ndim == 3:
+            return np.swapaxes(np.swapaxes(img, 1, 2), 0, 2)
+        elif img.ndim == 4:
+            return np.swapaxes(np.swapaxes(img, 2, 3), 1, 3)
 
     @staticmethod
-    def new_rgb_to_lab(img,is_training=True):
+    def swapimdims_HW3_3HW(img):
+        """Move the image channels to the last dimensiion of the numpy
+        multi-dimensional array
+
+        :param img: numpy nd array representing the image
+        :returns: numpy nd array with permuted axes
+        :rtype: numpy nd array
+
+        """
+        if img.ndim == 3:
+            return np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
+        elif img.ndim == 4:
+            return np.swapaxes(np.swapaxes(img, 1, 3), 2, 3)
+
+    @staticmethod
+    def new_rgb_to_lab(img):
+        device = img.device
         img = img.permute(0, 3, 2, 1)
         shape = img.shape
         img = img.contiguous()
@@ -21,17 +51,16 @@ class NEW_ImageProcessing(object):
         img = (img / 12.92) * img.le(0.04045).float() + (((torch.clamp(img,
                                                                        min=0.0001) + 0.055) / 1.055) ** 2.4) * img.gt(
             0.04045).float()
-
         rgb_to_xyz = Variable(torch.FloatTensor([  # X        Y          Z
             [0.412453, 0.212671, 0.019334],  # R
             [0.357580, 0.715160, 0.119193],  # G
             [0.180423, 0.072169,
              0.950227],  # B
-        ]), requires_grad=False).cuda()
+        ]), requires_grad=False).to(device)
 
         img = torch.matmul(img, rgb_to_xyz)
         img = torch.mul(img, Variable(torch.FloatTensor(
-            [1 / 0.950456, 1.0, 1 / 1.088754]), requires_grad=False).cuda())
+            [1 / 0.950456, 1.0, 1 / 1.088754]), requires_grad=False)).to(device)
 
         epsilon = 6 / 29
 
@@ -44,10 +73,10 @@ class NEW_ImageProcessing(object):
                                                     [116.0, -500.0, 200.0],
                                                     # fz
                                                     [0.0, 0.0, -200.0],
-                                                    ]), requires_grad=False).cuda()
+                                                    ]), requires_grad=False).to(device)
 
         img = torch.matmul(img, fxfyfz_to_lab) + Variable(
-            torch.FloatTensor([-16.0, 0.0, 0.0]), requires_grad=False).cuda()
+            torch.FloatTensor([-16.0, 0.0, 0.0]), requires_grad=False).to(device)
 
         img = img.view(shape)
         img = img.permute(0, 3, 2, 1)
@@ -59,10 +88,11 @@ class NEW_ImageProcessing(object):
         img[(img != img).detach()] = 0
 
         img = img.contiguous()
-        return img.cuda()
+        return img.to(device)
 
     @staticmethod
     def new_lab_to_rgb(img, is_training=True):
+        device = img.device
         """ PyTorch implementation of LAB to RGB conversion: https://docs.opencv.org/3.3.0/de/d25/imgproc_color_conversions.html
         Based roughly on a similar implementation here: https://github.com/affinelayer/pix2pix-tensorflow/blob/master/pix2pix.py
         :param img: image to be adjusted
@@ -79,17 +109,17 @@ class NEW_ImageProcessing(object):
         img_copy[:,:, 1] = ((img[:,:, 1] * 2) - 1) * 110
         img_copy[:,:, 2] = ((img[:,:, 2] * 2) - 1) * 110
 
-        img = img_copy.clone().cuda()
+        img = img_copy.clone().to(device)
         del img_copy
 
-        lab_to_fxfyfz = Variable(torch.cuda.FloatTensor([  # X Y Z
+        lab_to_fxfyfz = Variable(torch.FloatTensor([  # X Y Z
             [1 / 116.0, 1 / 116.0, 1 / 116.0],  # R
             [1 / 500.0, 0, 0],  # G
             [0, 0, -1 / 200.0],  # B
-        ]), requires_grad=False).cuda()
+        ]), requires_grad=False).to(device)
 
         img = torch.matmul(
-            img + Variable(torch.cuda.FloatTensor([16.0, 0.0, 0.0])), lab_to_fxfyfz)
+            img + Variable(torch.FloatTensor([16.0, 0.0, 0.0])), lab_to_fxfyfz).to(device)
 
         epsilon = 6.0 / 29.0
 
@@ -98,20 +128,17 @@ class NEW_ImageProcessing(object):
 
         # denormalize for D65 white point
         img = torch.mul(img, Variable(
-            torch.cuda.FloatTensor([0.950456, 1.0, 1.088754])))
+            torch.FloatTensor([0.950456, 1.0, 1.088754]))).to(device)
 
         xyz_to_rgb = Variable(torch.FloatTensor([  # X Y Z
             [3.2404542, -0.9692660, 0.0556434],  # R
             [-1.5371385, 1.8760108, -0.2040259],  # G
             [-0.4985314, 0.0415560, 1.0572252],  # B
-        ]), requires_grad=False).cuda()
+        ]), requires_grad=False).to(device)
 
         img = torch.matmul(img, xyz_to_rgb)
 
-        img = (img * 12.92 * img.le(0.0031308).float()) + ((torch.clamp(img,
-                                                                        min=0.0001) ** (
-                                                                        1 / 2.4) * 1.055) - 0.055) * img.gt(
-            0.0031308).float()
+        img = (img * 12.92 * img.le(0.0031308).float()) + ((torch.clamp(img, min=0.0001) ** (1 / 2.4) * 1.055) - 0.055) * img.gt(0.0031308).float()
 
         img = img.view(shape)
         img = img.permute(0,3, 2, 1)
@@ -176,6 +203,7 @@ class NEW_ImageProcessing(object):
 
     @staticmethod
     def new_rgb_to_hsv(img):
+        device = img.device
         img = torch.clamp(img, 1e-9, 1)
 
         img = img.permute(0,3, 2, 1)
@@ -188,8 +216,8 @@ class NEW_ImageProcessing(object):
         mn = torch.min(img, 2)[0]
 
         ones = Variable(torch.FloatTensor(
-            torch.ones((img.shape[0],img.shape[1])))).cuda()
-        zero = Variable(torch.FloatTensor(torch.zeros(shape[0:3]))).cuda()
+            torch.ones((img.shape[0],img.shape[1])))).to(device)
+        zero = Variable(torch.FloatTensor(torch.zeros(shape[0:3]))).to(device)
 
         img = img.view(shape)
 
@@ -209,13 +237,13 @@ class NEW_ImageProcessing(object):
         df = df.view(shape[0:3]) + 1e-10
         mx = mx.view(shape[0:3])
 
-        img = img.cuda()
-        df = df.cuda()
-        mx = mx.cuda()
+        img = img.to(device)
+        df = df.to(device)
+        mx = mx.to(device)
 
-        g = img[:,:, :, 1].clone().cuda()
-        b = img[:,:, :, 2].clone().cuda()
-        r = img[:,:, :, 0].clone().cuda()
+        g = img[:,:, :, 1].clone().to(device)
+        b = img[:,:, :, 2].clone().to(device)
+        r = img[:,:, :, 0].clone().to(device)
 
         img_copy = img.clone()
 
@@ -223,7 +251,7 @@ class NEW_ImageProcessing(object):
                              * g.eq(mx).float() + (4.0 + (r - g) / df) * b.eq(mx).float())
         img_copy[:,:, :, 0] = img_copy[:,:, :, 0] * 60.0
 
-        zero = zero.cuda()
+        zero = zero.to(device)
         img_copy2 = img_copy.clone()
 
         img_copy2[:,:, :, 0] = img_copy[:,:, :, 0].lt(zero).float(
@@ -248,6 +276,7 @@ class NEW_ImageProcessing(object):
     @staticmethod
     def new_apply_curve(img, C, slope_sqr_diff, channel_in, channel_out,
                     clamp=False):
+        device = img.device
         """Applies a peicewise linear curve defined by a set of knot points to
         an image channel
 
@@ -274,10 +303,8 @@ class NEW_ImageProcessing(object):
 
         s = torch.arange(slope.shape[1]-1)[None,:,None,None].repeat(img.shape[0],1,img.shape[1],img.shape[2])
 
-        r = r.cuda()
-        s = s.cuda()
-        r = r - s
-
+        r = r.to(device)
+        s = s.to(device)
         sl = slope[:,:-1,None,None].repeat(1,1,img.shape[1],img.shape[2])
         scl = torch.mul(sl,r)
 
@@ -290,6 +317,7 @@ class NEW_ImageProcessing(object):
         return img_copy, slope_sqr_diff
     @staticmethod
     def new_adjust_hsv(img, S):
+        device = img.device
         """Adjust the HSV channels of a HSV image using learnt curves
 
         :param img: image to be adjusted
@@ -307,7 +335,7 @@ class NEW_ImageProcessing(object):
         S3 = torch.exp(S[:,(int(S.shape[1] / 4) * 2):(int(S.shape[1] / 4) * 3)])
         S4 = torch.exp(S[:,(int(S.shape[1] / 4) * 3):(int(S.shape[1] / 4) * 4)])
 
-        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1) * 0.0).cuda()
+        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1) * 0.0).to(device)
 
         '''
         Adjust Hue channel based on Hue using the predicted curve
@@ -344,6 +372,7 @@ class NEW_ImageProcessing(object):
         return img, slope_sqr_diff
     @staticmethod
     def new_adjust_rgb(img, R):
+        device = img.device
         """Adjust the RGB channels of a RGB image using learnt curves
 
         :param img: image to be adjusted
@@ -366,7 +395,7 @@ class NEW_ImageProcessing(object):
         '''
         Apply the curve to the R channel
         '''
-        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1)*0.0).cuda()
+        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1)*0.0).to(device)
 
         img_copy, slope_sqr_diff = NEW_ImageProcessing.new_apply_curve(
             img, R1, slope_sqr_diff, channel_in=0, channel_out=0)
@@ -394,6 +423,7 @@ class NEW_ImageProcessing(object):
 
     @staticmethod
     def new_adjust_lab(img, L):
+        device = img.device
         """Adjusts the image in LAB space using the predicted curves
 
         :param img: Image tensor
@@ -414,7 +444,7 @@ class NEW_ImageProcessing(object):
         L2 = torch.exp(L[:,(int(L.shape[1]/3)):(int(L.shape[1]/3)*2)])
         L3 = torch.exp(L[:,(int(L.shape[1]/3)*2):(int(L.shape[1]/3)*3)])
 
-        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1)*0.0).cuda()
+        slope_sqr_diff = Variable(torch.zeros(img.shape[0],1)*0.0).to(device)
 
         '''
         Apply the curve to the L channel

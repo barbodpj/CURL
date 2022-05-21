@@ -8,11 +8,11 @@ Other Arguments are similar to the base code.
 
 <div class="row">
   <div class="column">
-    <img src="samples/in1.jpg" alt="Snow" style="width:100%">
+    <img src="samples/in1.jpg" alt="Snow" style="width:80%">
       <figcaption><center>Input</center></figcaption>
   </div>
   <div class="column">
-    <img src="samples/res1.jpg" alt="Forest" style="width:100%">
+    <img src="samples/res1.jpg" alt="Forest" style="width:80%">
       <figcaption><center>Output</center></figcaption>
   </div>
 </div>

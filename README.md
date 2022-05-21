@@ -7,14 +7,3 @@ Other Arguments are similar to the base code.
 
 
 
-<p align="center">
-  <img alt="alt text" src="samples/in1.jpg" >
-  <br>
-    <em>Sample Input</em>
-</p>
-<p align="center">
-  <img alt="alt text" src="samples/res1.jpg" >
-  <br>
-    <em>Sample Output</em>
-</p>
-

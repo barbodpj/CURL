@@ -5,6 +5,8 @@ In the training phase every few steps (determined by "valid_every" argument) eva
 You can choose between training and testing in the arguments
 Other Arguments are similar to the base code.
 
-Input:![Input](samples/in1.jpg)
-
-Output: ![Output](samples/res1.jpg "title-2")
+<p align="center">
+  <img alt="alt text" src="samples/in1.jpg" width="200">
+  <br>
+    <em>Input</em>
+</p>

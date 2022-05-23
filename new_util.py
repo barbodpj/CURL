@@ -57,10 +57,9 @@ class NEW_ImageProcessing(object):
             [0.180423, 0.072169,
              0.950227],  # B
         ]), requires_grad=False).to(device)
-
         img = torch.matmul(img, rgb_to_xyz)
         img = torch.mul(img, Variable(torch.FloatTensor(
-            [1 / 0.950456, 1.0, 1 / 1.088754]), requires_grad=False)).to(device)
+            [1 / 0.950456, 1.0, 1 / 1.088754]), requires_grad=False).to(device))
 
         epsilon = 6 / 29
 
@@ -119,7 +118,7 @@ class NEW_ImageProcessing(object):
         ]), requires_grad=False).to(device)
 
         img = torch.matmul(
-            img + Variable(torch.FloatTensor([16.0, 0.0, 0.0])), lab_to_fxfyfz).to(device)
+            img + Variable(torch.FloatTensor([16.0, 0.0, 0.0]).to(device)), lab_to_fxfyfz)
 
         epsilon = 6.0 / 29.0
 
@@ -128,7 +127,7 @@ class NEW_ImageProcessing(object):
 
         # denormalize for D65 white point
         img = torch.mul(img, Variable(
-            torch.FloatTensor([0.950456, 1.0, 1.088754]))).to(device)
+            torch.FloatTensor([0.950456, 1.0, 1.088754]).to(device)))
 
         xyz_to_rgb = Variable(torch.FloatTensor([  # X Y Z
             [3.2404542, -0.9692660, 0.0556434],  # R
@@ -305,6 +304,7 @@ class NEW_ImageProcessing(object):
 
         r = r.to(device)
         s = s.to(device)
+        r = r - s
         sl = slope[:,:-1,None,None].repeat(1,1,img.shape[1],img.shape[2])
         scl = torch.mul(sl,r)
 

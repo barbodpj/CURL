@@ -181,16 +181,11 @@ class NEW_CURLLoss(nn.Module):
         num_images = target_img_batch.shape[0]
         target_img_batch = target_img_batch
 
-        ssim_loss_value = Variable(
-            torch.FloatTensor(torch.zeros(1, 1).to(device)))
-        l1_loss_value = Variable(
-            torch.FloatTensor(torch.zeros(1, 1).to(device)))
-        cosine_rgb_loss_value = Variable(
-            torch.FloatTensor(torch.zeros(1, 1).to(device)))
-        hsv_loss_value = Variable(
-            torch.FloatTensor(torch.zeros(1, 1).to(device)))
-        rgb_loss_value = Variable(
-            torch.FloatTensor(torch.zeros(1, 1).to(device)))
+        ssim_loss_value = torch.zeros(1, 1).to(device)
+        l1_loss_value =  torch.zeros(1, 1).to(device)
+        cosine_rgb_loss_value =  torch.zeros(1, 1).to(device)
+        hsv_loss_value =  torch.zeros(1, 1).to(device)
+        rgb_loss_value = torch.zeros(1, 1).to(device)
 
 
 
@@ -380,11 +375,8 @@ class NEW_CURLLayer(nn.Module):
         x = x.view(x.size()[0], -1)
         x = self.dropout2(x)
         R = self.fc_rgb(x)
-
-
         img_rgb, gradient_regulariser_rgb = NEW_ImageProcessing.new_adjust_rgb(
             img_rgb, R[:, 0:48])
-
         img_rgb = torch.clamp(img_rgb, 0, 1)
 
         img_hsv = NEW_ImageProcessing.new_rgb_to_hsv(img_rgb)

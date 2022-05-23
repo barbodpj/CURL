@@ -1,3 +1,4 @@
+
 '''
 This is a PyTorch implementation of CURL: Neural Curve Layers for Global Image Enhancement
 https://arxiv.org/pdf/1911.13175.pdf
@@ -35,7 +36,7 @@ def main():
         "--valid_every", type=int, required=False, help="Number of epoches after which to compute validation accuracy",
         default=1)
     parser.add_argument(
-        "--checkpoint_filepath", required=False, help="Location of checkpoint file", default=None)
+        "--checkpoint_filepath", required=False, help="Location of checkpoint file", default="a.pt")
     parser.add_argument(
         "--val_path", required=False,
         help="Directory containing images to run through a saved CURL model instance", default="./dataset/val")
@@ -45,9 +46,9 @@ def main():
     parser.add_argument(
         "--test_path", required=False,
         help="Directory containing images to train a DeepLPF model instance", default="./dataset/test")
-    parser.add_argument("--device", required=False, help="Cuda or CPU", default="cpu")
-    parser.add_argument("--mode", required=False, help="Train or Test", default="train")
-
+    parser.add_argument("--device", required=False, help="Cuda or CPU", default="cuda")
+    parser.add_argument("--mode", required=False, help="Train or Test", default="test")
+    parser.add_argument("--batch_size", required=False, help="Batch Size", default=2)
 
 
     args = parser.parse_args()
@@ -59,8 +60,8 @@ def main():
     training_img_dirpath = args.train_path
     test_dirpath = args.test_path
     DEVICE= args.device
+    BATCH_SIZE = args.batch_size
 
-    BATCH_SIZE=4
 
 
 
@@ -71,14 +72,15 @@ def main():
         train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
 
     if mode == "test":
-        test_dataset = IE_Dataset(data_dir=test_dirpath, target_size=(1000, 600))
+        test_dataset = IE_Dataset(data_dir=test_dirpath, target_size=(1500, 1000))
         test_data_loader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=1)
 
     net = NEW_MODEL.CURLNet()
     net.to(device=DEVICE)
     if checkpoint_filepath is not None:
         checkpoint = torch.load(checkpoint_filepath, map_location=DEVICE)
-        net.load_state_dict(checkpoint['model_state_dict'])
+        print("Loading from saved model")
+        net.load_state_dict(checkpoint['model_state_dict'],strict=False)
 
     criterion = NEW_MODEL.NEW_CURLLoss()
 
@@ -155,7 +157,7 @@ def main():
                         total_ssim += SSIM(net_img_batch, gt_img_batch)
 
                         for ind in range(net_img_batch.shape[0]):
-                            writer.add_image('Results on ' + file_name[ind], net_img_batch[ind], epoch+1,
+                            writer.add_image('Results on ' + file_name[ind], net_img_batch[ind][:,:,::-1], epoch+1,
                                              dataformats='CHW')
                         examples += BATCH_SIZE
 
@@ -192,15 +194,16 @@ def main():
                 loss = criterion(net_img_batch,
                                  gt_img_batch, gradient_regulariser)
 
-                writer.add_scalar('Test/Loss_Smooth', loss.data[0], 0)
-                writer.add_scalar('Test/PSNR',  PSNR(net_img_batch, gt_img_batch), 0)
-                writer.add_scalar('Test/SSIM', SSIM(net_img_batch, gt_img_batch), 0)
+                writer.add_scalar('Test/Loss_Smooth', loss.data[0], batch_num)
+                writer.add_scalar('Test/PSNR',  PSNR(net_img_batch, gt_img_batch), batch_num)
+                writer.add_scalar('Test/SSIM', SSIM(net_img_batch, gt_img_batch), batch_num)
 
                 for ind in range(net_img_batch.shape[0]):
-                    writer.add_image('Results on ' + file_name[ind], net_img_batch[ind],0,
+                    writer.add_image('Results on ' + file_name[ind], torch.flip(net_img_batch[ind],dims=(0,)),1,
                                      dataformats='CHW')
-                    image = input_img_batch[ind].permute(1,2,0).cpu().numpy()
-                    image = image[:,:,::-1]*255
+                    image = net_img_batch[ind].permute(1,2,0).cpu().numpy()
+                    image = image*255
+                    image = image.astype('uint8')
                     cv2.imwrite("results/" + file_name[ind],image)
             writer.flush()
 
